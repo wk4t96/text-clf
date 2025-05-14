@@ -10,7 +10,7 @@ import altair as alt
 st.set_page_config("新聞網爬蟲 + 情緒分析", layout="centered")
 @st.cache_resource
 def load_bert_pipeline():
-    return pipeline("text-classification", model="bert-base-chinese")
+    return pipeline("text-classification", model="bert-base-chinese", framework="pt")  # add
 bert_classifier = load_bert_pipeline()
 st.title("新聞網標題爬蟲 + 情緒分析儀表板")
 start_date = st.text_input("起始日期（YYYYMMDD）", value="20250101")
