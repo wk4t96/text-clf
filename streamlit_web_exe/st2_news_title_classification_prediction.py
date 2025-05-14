@@ -11,7 +11,8 @@ NUM_WORDS = 10000
 # 1. load models
 @st.cache_resource
 def load_lstm_model():
-    model = load_model("model_files/lstm_news_model.h5")
+    #model = load_model("model_files/lstm_news_model.h5")
+    model = joblib.load("model_files/nb_model.joblib")
     with open("model_files/tokenizer_lstm.pickle", "rb") as f:
         import pickle
         tokenizer = pickle.load(f)  # tokenizer 將文字轉換成機器可讀的數值序列
