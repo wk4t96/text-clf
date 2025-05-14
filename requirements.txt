@@ -4,3 +4,8 @@ tensorflow
 jieba
 joblib
 scikit-learn
+pandas
+requests
+beautifulsoup4
+transformers
+altair
