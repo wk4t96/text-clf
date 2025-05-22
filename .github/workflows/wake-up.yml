@@ -12,6 +12,8 @@ on:
 jobs:
   auto-commit:
     runs-on: ubuntu-latest
+    permissions:      # 添加這一行來授予寫入權限
+      contents: write # 授予對儲存庫內容的寫入權限
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
