@@ -1,1 +1,31 @@
+name: Keep Streamlit App Awake
 
+on:
+  schedule:
+    # 每天 UTC 時間 00:00 (午夜) 運行，以防止休眠
+    # 你可以調整這個 cron 表達式來改變觸發頻率
+    # 建議間隔小於 12 小時 (Streamlit 的休眠閾值)
+    # 例如：'0 */10 * * *' 表示每 10 小時運行一次
+    - cron: '0 0 * * *' # 每天 UTC 時間 00:00 運行
+  workflow_dispatch: # 允許手動觸發此工作流程
+
+jobs:
+  auto-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # 確保拉取所有歷史記錄，以便可以創建新的提交
+
+      - name: Configure Git
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+      - name: Create empty commit
+        run: |
+          git commit --allow-empty -m "Keep Streamlit app awake (automated commit)"
+          git push
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} # 使用內建的 GITHUB_TOKEN
