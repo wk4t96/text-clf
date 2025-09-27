@@ -18,8 +18,8 @@ def load_lstm_model():
         tokenizer = pickle.load(f)  # tokenizer 將文字轉換成機器可讀的數值序列
     return model, tokenizer
 @st.cache_resource
-def load_nb_model():
-    model = joblib.load("model_files/nb_model.joblib")
+def load_lr_model():
+    model = joblib.load("model_files/LogisticRegression.joblib")
     vectorizer = joblib.load("model_files/tfidf_vectorizer.joblib")
     return model, vectorizer
 @st.cache_resource
@@ -73,7 +73,7 @@ def predict_tfidf(title, model, vectorizer, label_map, return_top_3=True):
 # 3. input
 st.set_page_config("新聞分類預測器", layout="centered")
 st.title(" 新聞標題自動分類推薦系統")
-model_type = st.radio("選擇模型：", ["Decision Tree", "Naive Bayes", "LSTM"])
+model_type = st.radio("選擇模型：", ["Decision Tree", "Logistic Regression", "LSTM"])
 title_input = st.text_area("請輸入新聞標題：", height=80)
 label_map = {0: "國際", 1: "政治", 2: "焦點", 3: "生活", 4: "社會",5:"蒐奇",6:"財經",7:"財經週報",8:"其他"}  
 if st.button("開始預測"):
@@ -88,7 +88,7 @@ if st.button("開始預測"):
             model, tfidf_vectorizer = load_dt_model()
             label, prob, res = predict_tfidf(title_input, model, tfidf_vectorizer, label_map)
         else:
-            model, tfidf_vectorizer = load_nb_model()
+            model, tfidf_vectorizer = loadlr_model()
             label, prob, res = predict_tfidf(title_input, model, tfidf_vectorizer, label_map)
         st.markdown(f"### 預測分類：**{label}**")
         st.markdown(f"預測機率：`{prob*100:.2f}%`")
