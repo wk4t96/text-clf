@@ -1,22 +1,13 @@
-# Streamlit & Web
 streamlit==1.25.0
 altair==5.0.1
-
-# 數據處理
 numpy==1.25.2
 pandas==2.1.2
 scikit-learn==1.3.0
 joblib==1.3.2
-
-# 網路爬蟲
 requests==2.31.0
 beautifulsoup4==4.12.2
 jieba==0.42.1
-
-# 深度學習
 torch==2.1.1
-transformers>=4.31.0  # 新版 Transformers 不再依賴 distutils/tf-keras
-
-# 支援安裝
+transformers>=4.31.0
 setuptools>=68.0
 wheel
