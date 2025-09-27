@@ -1,4 +1,4 @@
-# 使用者在網頁介面上與之互動後，結果會顯示在網頁上。 # 執行指令：python -m streamlit run st2.py
+# 使用者在網頁介面上與之互動後，結果會顯示在網頁上。 # 執行指令：python -m streamlit run st2_news_title_classification_prediction.py
 import streamlit as st
 import numpy as np
 import jieba
