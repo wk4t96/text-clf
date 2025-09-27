@@ -9,3 +9,4 @@ jieba==0.42.1
 requests==2.31.0
 beautifulsoup4==4.12.2
 altair==5.0.1
+setuptools>=68.0  # 確保 distutils 可用
