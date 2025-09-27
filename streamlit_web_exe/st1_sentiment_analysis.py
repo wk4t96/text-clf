@@ -14,14 +14,7 @@ st.set_page_config("新聞網爬蟲 + 情緒分析", layout="centered")
 @st.cache_resource
 def load_bert_pipeline():
     # 使用 Erlangshen-RoBERTa 進行中文情緒分析
-    return pipeline(
-        "text-classification",
-        model="IDEA-CCNL/Erlangshen-RoBERTa-110M-Sentiment",
-        tokenizer="IDEA-CCNL/Erlangshen-RoBERTa-110M-Sentiment",
-        return_all_scores=True,  # 回傳每個分類的機率，可選 True/False
-        framework="pt"
-    )
-
+    return pipeline(model="bert-base-chinese")
 bert_classifier = load_bert_pipeline()
 st.title("新聞網標題爬蟲 + 情緒分析儀表板")
 start_date = st.text_input("起始日期（YYYYMMDD）", value="20250101")
