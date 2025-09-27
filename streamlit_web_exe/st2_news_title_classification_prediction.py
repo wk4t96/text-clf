@@ -29,26 +29,33 @@ def load_dt_model():
     return model, vectorizer
 
 # 2. predict
-def predict_lstm(title, model, tokenizer, label_map, return_top_3=True):
-    seq = tokenizer.texts_to_sequences([" ".join(jieba.cut(title))])
-    padded = pad_sequences(seq, maxlen=MAX_LEN)
+def predict_lstm(title, model, tokenizer, label_map, max_len=100, return_top_3=True):
+    # 直接使用原始文字，不做分詞
+    seq = tokenizer.texts_to_sequences([title])
+    padded = pad_sequences(seq, maxlen=max_len)
+    
     pred_probs = model.predict(padded)[0]
     idx = np.argmax(pred_probs)
     if idx >= len(label_map):
         idx = len(label_map) - 1
+    
     top_probability = float(pred_probs[idx])
     top_label = label_map[idx]
+    
     if return_top_3:
-        label_probability_pairs = []
-        for i, prob in enumerate(pred_probs):
-            label_index = min(i, len(label_map) - 1)
-            prob_formatted = f"{prob:.4f}"
-            label_probability_pairs.append({'標籤': label_map[label_index], '機率': float(prob_formatted)})
-        sorted_pairs = sorted(label_probability_pairs, key=lambda item: item['機率'], reverse=True)
+        # 將每個類別與機率整理
+        label_probability_pairs = [
+            {'標籤': label_map[i], '機率': float(f"{prob:.4f}")}
+            for i, prob in enumerate(pred_probs)
+        ]
+        # 按機率排序
+        sorted_pairs = sorted(label_probability_pairs, key=lambda x: x['機率'], reverse=True)
         top_3_pairs = sorted_pairs[:3]
         return top_label, top_probability, top_3_pairs
     else:
         return top_label, top_probability
+
+
 def predict_tfidf(title, model, vectorizer, label_map, return_top_3=True):
     cut_text = " ".join(jieba.cut(title))
     vec = vectorizer.transform([cut_text])
@@ -75,7 +82,7 @@ st.set_page_config("新聞分類預測器", layout="centered")
 st.title(" 新聞標題自動分類推薦系統")
 model_type = st.radio("選擇模型：", ["Decision Tree", "Logistic Regression", "LSTM"])
 title_input = st.text_area("請輸入新聞標題：", height=80)
-label_map = {0: "國際", 1: "政治", 2: "焦點", 3: "生活", 4: "社會",5:"蒐奇",6:"財經",7:"財經週報",8:"其他"}  
+label_map = {0: "國際", 1: "政治", 2: "焦點", 3: "生活", 4: "社會",5:"蒐奇",6:"財經",7:"財經週報",8:"軍武"}  
 if st.button("開始預測"):
     if title_input.strip() == "":
         st.warning("請輸入一段新聞標題文字。")
