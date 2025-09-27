@@ -18,7 +18,8 @@ def load_bert_pipeline():
         "text-classification",
         model="IDEA-CCNL/Erlangshen-RoBERTa-110M-Sentiment",
         tokenizer="IDEA-CCNL/Erlangshen-RoBERTa-110M-Sentiment",
-        return_all_scores=True  # 回傳每個分類的機率，可選 True/False
+        return_all_scores=True,  # 回傳每個分類的機率，可選 True/False
+        framework="pt"
     )
 
 bert_classifier = load_bert_pipeline()
