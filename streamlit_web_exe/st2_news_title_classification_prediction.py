@@ -88,7 +88,7 @@ if st.button("開始預測"):
             model, tfidf_vectorizer = load_dt_model()
             label, prob, res = predict_tfidf(title_input, model, tfidf_vectorizer, label_map)
         else:
-            model, tfidf_vectorizer = loadlr_model()
+            model, tfidf_vectorizer = load_lr_model()
             label, prob, res = predict_tfidf(title_input, model, tfidf_vectorizer, label_map)
         st.markdown(f"### 預測分類：**{label}**")
         st.markdown(f"預測機率：`{prob*100:.2f}%`")
