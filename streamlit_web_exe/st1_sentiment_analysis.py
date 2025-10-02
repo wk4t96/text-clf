@@ -6,21 +6,27 @@ import time
 from bs4 import BeautifulSoup
 from transformers import pipeline
 import altair as alt
+from transformers import AutoTokenizer, AutoModelForSequenceClassification, pipeline
 
-st.set_page_config("新聞網爬蟲 + 情緒分析", layout="centered")
 @st.cache_resource
 def load_bert_pipeline():
+    model_path = "./sentiment_fine_tuned_model"
+    tokenizer = AutoTokenizer.from_pretrained(model_path)
+    model = AutoModelForSequenceClassification.from_pretrained(model_path)
+
     return pipeline(
-        "text-classification", 
-        model="IDEA-CCNL/Erlangshen-RoBERTa-110M-Sentiment",
+        "text-classification",
+        model=model,
+        tokenizer=tokenizer,
         framework="pt"
     )
-
 bert_classifier = load_bert_pipeline()
+
+
 st.title("新聞網標題爬蟲 + 情緒分析儀表板")
 start_date = st.text_input("起始日期（YYYYMMDD）", value="20250101")
 end_date = st.text_input("結束日期（YYYYMMDD）", value="20250105")
-keyword = st.text_input("關鍵字", value="AI")
+keyword = st.text_input("關鍵字", value="財經")
 if st.button("開始爬蟲 + 情緒分析"):
     with st.spinner("爬蟲進行中，請稍候..."):
         df = pd.DataFrame(columns=["title", "class", "time", "link"])
