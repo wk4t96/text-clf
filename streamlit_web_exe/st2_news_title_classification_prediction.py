@@ -6,6 +6,7 @@ import jieba
 from tensorflow.keras.preprocessing.sequence import pad_sequences
 from tensorflow.keras.models import load_model
 import joblib
+import pickle
 
 MAX_LEN = 30
 NUM_WORDS = 10000
@@ -13,10 +14,16 @@ NUM_WORDS = 10000
 @st.cache_resource
 def load_lstm_model():
     model = load_model("model_files/lstm_news_model.h5")
+    
+    # 載入 tokenizer
     with open("model_files/tokenizer_lstm.pickle", "rb") as f:
-        import pickle
-        tokenizer = pickle.load(f)  # tokenizer 將文字轉換成機器可讀的數值序列
-    return model, tokenizer
+        tokenizer = pickle.load(f)
+    
+    # 載入 LabelEncoder
+    with open("model_files/label_encoder_lstm.pickle", "rb") as f:
+        label_encoder = pickle.load(f)
+    
+    return model, tokenizer, label_encoder
 @st.cache_resource
 def load_lr_model():
     model = joblib.load("model_files/LogisticRegression.joblib")
@@ -29,26 +36,26 @@ def load_dt_model():
     return model, vectorizer
 
 # 2. predict
-def predict_lstm(title, model, tokenizer, label_map, max_len=100, return_top_3=True):
-    # 直接使用原始文字，不做分詞
-    seq = tokenizer.texts_to_sequences([title])
-    padded = pad_sequences(seq, maxlen=max_len)
+def predict_lstm(title, model, tokenizer, label_encoder, max_len=30, return_top_3=True):
+    # 1️⃣ jieba 斷詞
+    cut_title = " ".join(jieba.cut(title))
     
+    # 2️⃣ 轉成序列
+    seq = tokenizer.texts_to_sequences([cut_title])
+    padded = pad_sequences(seq, maxlen=max_len, padding="post")
+    
+    # 3️⃣ 模型預測
     pred_probs = model.predict(padded)[0]
     idx = np.argmax(pred_probs)
-    if idx >= len(label_map):
-        idx = len(label_map) - 1
     
+    top_label = label_encoder.inverse_transform([idx])[0]
     top_probability = float(pred_probs[idx])
-    top_label = label_map[idx]
     
     if return_top_3:
-        # 將每個類別與機率整理
         label_probability_pairs = [
-            {'標籤': label_map[i], '機率': float(f"{prob:.4f}")}
+            {'標籤': label_encoder.inverse_transform([i])[0], '機率': float(f"{prob:.4f}")}
             for i, prob in enumerate(pred_probs)
         ]
-        # 按機率排序
         sorted_pairs = sorted(label_probability_pairs, key=lambda x: x['機率'], reverse=True)
         top_3_pairs = sorted_pairs[:3]
         return top_label, top_probability, top_3_pairs
@@ -88,9 +95,8 @@ if st.button("開始預測"):
         st.warning("請輸入一段新聞標題文字。")
     else:
         if model_type == "LSTM":
-            model, lstm_tokenizer = load_lstm_model()
-            label, prob, res = predict_lstm(title_input, model, lstm_tokenizer, label_map)
-            #res = predict_lstm_top_3_probs(title_input, model, lstm_tokenizer, label_map)
+            model, lstm_tokenizer, label_encoder = load_lstm_model()
+            label, prob, res = predict_lstm(title_input, model, lstm_tokenizer, label_encoder)
         elif model_type == "Decision Tree":
             model, tfidf_vectorizer = load_dt_model()
             label, prob, res = predict_tfidf(title_input, model, tfidf_vectorizer, label_map)
