@@ -23,15 +23,15 @@ def load_lstm_model():
     with open("model_files/label_encoder_lstm.pickle", "rb") as f:
         label_encoder = pickle.load(f)
     
-    return model, tokenizer, label_encoder
+    return model, tokenizer
 @st.cache_resource
 def load_lr_model():
     model = joblib.load("model_files/LogisticRegression.joblib")
     vectorizer = joblib.load("model_files/tfidf_vectorizer.joblib")
     return model, vectorizer
 @st.cache_resource
-def load_dt_model():
-    model = joblib.load("model_files/DecisionTree1.joblib")
+def load_mnb_model():
+    model = joblib.load("model_files/MultinomialNB.joblib")
     vectorizer = joblib.load("model_files/tfidf_vectorizer.joblib")
     return model, vectorizer
 
@@ -63,46 +63,61 @@ def predict_lstm(title, model, tokenizer, label_encoder, max_len=30, return_top_
         return top_label, top_probability
 
 
-def predict_tfidf(title, model, vectorizer, label_map, return_top_3=True):
+def predict_tfidf(title, model, vectorizer, label_encoder, return_top_3=True):
+    # 中文斷詞
     cut_text = " ".join(jieba.cut(title))
     vec = vectorizer.transform([cut_text])
+    
+    # 模型預測機率
     probs = model.predict_proba(vec)[0]
+    
+    # 取得最高機率索引
     idx = np.argmax(probs)
-    if idx >= len(label_map):
-        idx = len(label_map) - 1
+    if idx >= len(label_encoder.classes_):
+        idx = len(label_encoder.classes_) - 1
+    
+    # 從 label_encoder 取得標籤
+    top_label = label_encoder.classes_[idx]
     top_probability = float(probs[idx])
-    top_label = label_map[idx]
+    
     if return_top_3:
+        # 建立標籤-機率對應列表
         label_probability_pairs = []
         for i, prob in enumerate(probs):
-            label_index = min(i, len(label_map) - 1)
-            prob_formatted = f"{prob:.4f}"
-            label_probability_pairs.append({'標籤': label_map[label_index], '機率': float(prob_formatted)})
-        sorted_pairs = sorted(label_probability_pairs, key=lambda item: item['機率'], reverse=True)
-        top_3_pairs = sorted_pairs[:3]
+            label_index = min(i, len(label_encoder.classes_) - 1)
+            label_probability_pairs.append({
+                '標籤': label_encoder.classes_[label_index],
+                '機率': float(f"{prob:.4f}")
+            })
+        # 依機率排序，取前三名
+        top_3_pairs = sorted(label_probability_pairs, key=lambda x: x['機率'], reverse=True)[:3]
         return top_label, top_probability, top_3_pairs
     else:
         return top_label, top_probability
 
+
 # 3. input
 st.set_page_config("新聞分類預測器", layout="centered")
 st.title(" 新聞標題自動分類推薦系統")
-model_type = st.radio("選擇模型：", ["Decision Tree", "Logistic Regression", "LSTM"])
+model_type = st.radio("選擇模型：", ["LSTM", "Logistic Regression", "Multinomial Naive Bayes"])
 title_input = st.text_area("請輸入新聞標題：", height=80)
-label_map = {0: "國際", 1: "政治", 2: "焦點", 3: "生活", 4: "社會",5:"蒐奇",6:"財經",7:"財經週報",8:"軍武"}  
+# 載入 LabelEncoder
+with open("model_files/label_encoder_lstm.pickle", "rb") as f:
+    label_encoder = pickle.load(f)
+
 if st.button("開始預測"):
     if title_input.strip() == "":
         st.warning("請輸入一段新聞標題文字。")
     else:
         if model_type == "LSTM":
-            model, lstm_tokenizer, label_encoder = load_lstm_model()
+            model, lstm_tokenizer = load_lstm_model()
             label, prob, res = predict_lstm(title_input, model, lstm_tokenizer, label_encoder)
-        elif model_type == "Decision Tree":
-            model, tfidf_vectorizer = load_dt_model()
-            label, prob, res = predict_tfidf(title_input, model, tfidf_vectorizer, label_map)
+        elif model_type == "Multinomial Naive Bayes":
+            model, tfidf_vectorizer = load_mnb_model()
+            label, prob, res = predict_tfidf(title_input, model, tfidf_vectorizer, label_encoder)
         else:
             model, tfidf_vectorizer = load_lr_model()
-            label, prob, res = predict_tfidf(title_input, model, tfidf_vectorizer, label_map)
+            label, prob, res = predict_tfidf(title_input, model, tfidf_vectorizer, label_encoder)
         st.markdown(f"### 預測分類：**{label}**")
         st.markdown(f"預測機率：`{prob*100:.2f}%`")
         st.markdown(f"前三高的預測標籤與機率：`{res}`")
